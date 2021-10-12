@@ -1,0 +1,21 @@
+
+Proteus/Scheduler/Project Backups/
+Scheduler/.settings/
+Scheduler/Drivers/
+Scheduler/Debug/
+Scheduler/Debug/Drivers/
+Proteus/Scheduler/Scheduler.pdsprj.NARUKIRI.ngocc.workspace
+Scheduler/.cproject
+Scheduler/.mxproject
+Scheduler/.project
+Scheduler/Core/Inc/main.h
+Scheduler/Core/Inc/stm32f1xx_hal_conf.h
+Scheduler/Core/Inc/stm32f1xx_it.h
+Scheduler/Core/Src/stm32f1xx_hal_msp.c
+Scheduler/Core/Src/stm32f1xx_it.c
+Scheduler/Core/Src/syscalls.c
+Scheduler/Core/Src/sysmem.c
+Scheduler/Core/Src/system_stm32f1xx.c
+Scheduler/Core/Startup/startup_stm32f103c6tx.s
+Scheduler/Scheduler.ioc
+Scheduler/STM32F103C6TX_FLASH.ld
