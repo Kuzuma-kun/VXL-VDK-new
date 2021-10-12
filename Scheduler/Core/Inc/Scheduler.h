@@ -8,6 +8,8 @@
 #ifndef INC_SCHEDULER_H_
 #define INC_SCHEDULER_H_
 
+#include "main.h"
+
 struct SCH_Task {
 	void (*pFunc)();
 	uint32_t delay;
@@ -20,7 +22,7 @@ struct SCH_Task {
 
 struct SCH_Task extern sch_Task[MAX_TASK];
 
-uint32_t SCH_Add_Task(void(*pFunction)(), unit32_t DELAY, uint32_t PERIOD);
+uint32_t SCH_Add_Task(void(*pFunction)(), uint32_t DELAY, uint32_t PERIOD);
 uint8_t SCH_Delete_Task(uint32_t taskID);
 void SCH_Update(void);
 void SCH_Dispactch_Tasks(void);

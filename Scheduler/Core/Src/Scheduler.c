@@ -4,13 +4,7 @@
  *  Created on: Oct 12, 2021
  *      Author: ngocc
  */
-
-struct SCH_Task {
-	void (*pFunc)();
-	uint32_t delay;
-	uint32_t period;
-	uint8_t ready;
-};
+#include "Scheduler.h"
 
 #define MAX_TASK 	5
 #define TICK_TIME 	10
@@ -18,7 +12,7 @@ struct SCH_Task {
 struct SCH_Task sch_Task[MAX_TASK];
 
 
-uint32_t SCH_Add_Task(void(*pFunction)(), unit32_t DELAY, uint32_t PERIOD) {
+uint32_t SCH_Add_Task(void(*pFunction)(), uint32_t DELAY, uint32_t PERIOD) {
 	uint32_t index;
 	//find an empty slot to put the task in.
 	while (sch_Task[index].pFunc != 0 && index < MAX_TASK) {
@@ -29,7 +23,7 @@ uint32_t SCH_Add_Task(void(*pFunction)(), unit32_t DELAY, uint32_t PERIOD) {
 	sch_Task[index].delay = DELAY;
 	sch_Task[index].pFunc = pFunction;
 	sch_Task[index].period = PERIOD;
-	sch_Task[index].ready = NULL;
+	sch_Task[index].ready = 0;
 	return index;
 }
 
