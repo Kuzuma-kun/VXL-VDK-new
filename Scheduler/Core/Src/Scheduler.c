@@ -6,6 +6,7 @@
  */
 #include "Scheduler.h"
 #include "string.h"		//needed for memmove
+#include "main.h"
 
 #define MAX_TASK 	5
 #define TICK_TIME 	10
@@ -14,6 +15,7 @@ struct SCH_Task sch_Task[MAX_TASK];
 
 static int queue_size = 0;
 
+UART_HandleTypeDef huart1;
 void SCH_Init(void) {
 	for(int i = 0; i < MAX_TASK; i++) {
 		sch_Task[i].delay = 0;
@@ -42,7 +44,7 @@ uint8_t SCH_Delete_Task(uint32_t taskID) {
 	}
 	//if that taskID exist, we have to move data
 	//shift data to the left or if task is at the end of queue, simply initialize it with zero
-	if (taskID == MAX_TASK - 1) {
+	if (taskID == queue_size - 1) {
 		sch_Task[taskID].delay = 0;
 		sch_Task[taskID].pFunc = NULL;
 		sch_Task[taskID].period = 0;
@@ -51,6 +53,7 @@ uint8_t SCH_Delete_Task(uint32_t taskID) {
 		//need an address. sch_Task[taskID] do not return an address but a struct Sch_Task. that why we need &
 		memmove(&sch_Task[taskID], &sch_Task[taskID + 1], (sizeof(struct SCH_Task) * (MAX_TASK - (taskID + 1))));
 	}
+	queue_size--;
 //
 	return taskID;
 }
@@ -79,6 +82,10 @@ void SCH_Dispactch_Tasks(void) {
 			//run the task
 			//dereference it first, and then run.
 			(*sch_Task[i].pFunc)();
+			char timeFormat[30];
+			uint32_t time_ms = HAL_GetTick();
+			int strlength = sprintf(timeFormat, "task done: %ld\r\n", time_ms);
+			HAL_UART_Transmit(&huart1, (uint8_t*)timeFormat, strlength, 10 * strlength);
 			sch_Task[i].ready -= 1;
 			//in case the task only run once, if it's scheduled to run, we need to run it first
 			//(keep the function there to run) and then only after it has done, delete the task.
@@ -87,6 +94,10 @@ void SCH_Dispactch_Tasks(void) {
 			}
 		}
 	}
+}
+
+uint32_t getTaskDelay(int index) {
+	return sch_Task[index].delay;
 }
 
 
