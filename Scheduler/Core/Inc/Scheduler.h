@@ -11,7 +11,7 @@
 #include "main.h"
 
 struct SCH_Task {
-	void (*pFunc)();
+	void (*pFunc)(void);
 	uint32_t delay;
 	uint32_t period;
 	uint8_t ready;
@@ -22,6 +22,7 @@ struct SCH_Task {
 
 struct SCH_Task extern sch_Task[MAX_TASK];
 
+void SCH_Init();
 uint32_t SCH_Add_Task(void(*pFunction)(), uint32_t DELAY, uint32_t PERIOD);
 uint8_t SCH_Delete_Task(uint32_t taskID);
 void SCH_Update(void);

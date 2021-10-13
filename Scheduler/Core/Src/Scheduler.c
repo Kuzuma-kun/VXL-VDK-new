@@ -5,47 +5,68 @@
  *      Author: ngocc
  */
 #include "Scheduler.h"
+#include "string.h"		//needed for memmove
 
 #define MAX_TASK 	5
 #define TICK_TIME 	10
 
 struct SCH_Task sch_Task[MAX_TASK];
 
+static int queue_size = 0;
+
+void SCH_Init(void) {
+	for(int i = 0; i < MAX_TASK; i++) {
+		sch_Task[i].delay = 0;
+		sch_Task[i].pFunc = NULL;
+		sch_Task[i].period = 0;
+		sch_Task[i].ready = 0;
+	}
+}
 
 uint32_t SCH_Add_Task(void(*pFunction)(), uint32_t DELAY, uint32_t PERIOD) {
-	uint32_t index;
+
 	//find an empty slot to put the task in.
-	while (sch_Task[index].pFunc != 0 && index < MAX_TASK) {
-		index++;
-	}
-	if (index >= MAX_TASK) return -1;
-	//if a slot is found:
-	sch_Task[index].delay = DELAY;
-	sch_Task[index].pFunc = pFunction;
-	sch_Task[index].period = PERIOD;
-	sch_Task[index].ready = 0;
-	return index;
+	if (queue_size >= MAX_TASK) return -1;
+	//if a slot is found (queue still have some space)
+	sch_Task[queue_size].delay = DELAY;
+	sch_Task[queue_size].pFunc = pFunction;
+	sch_Task[queue_size].period = PERIOD;
+	sch_Task[queue_size].ready = 0;
+	queue_size++;
+	return (queue_size - 1);
 }
 
 uint8_t SCH_Delete_Task(uint32_t taskID) {
-	if (taskID < 0 || taskID >= MAX_TASK || sch_Task[taskID].pFunc == NULL) {
+	if (taskID < 0 || taskID >= queue_size || sch_Task[taskID].pFunc == NULL) {
 		return -1;
 	}
-	sch_Task[taskID].delay = 0;
-	sch_Task[taskID].pFunc = NULL;
-	sch_Task[taskID].period = 0;
-	sch_Task[taskID].ready = 0;
+	//if that taskID exist, we have to move data
+	//shift data to the left or if task is at the end of queue, simply initialize it with zero
+	if (taskID == MAX_TASK - 1) {
+		sch_Task[taskID].delay = 0;
+		sch_Task[taskID].pFunc = NULL;
+		sch_Task[taskID].period = 0;
+		sch_Task[taskID].ready = 0;
+	} else {
+		//need an address. sch_Task[taskID] do not return an address but a struct Sch_Task. that why we need &
+		memmove(&sch_Task[taskID], &sch_Task[taskID + 1], (sizeof(struct SCH_Task) * (MAX_TASK - (taskID + 1))));
+	}
+//
 	return taskID;
 }
 
 void SCH_Update(void) {
-	for(int i = 0; i < MAX_TASK; i++) {
+	for(int i = 0; i < queue_size; i++) {
 		if (sch_Task[i].pFunc != 0) {
 			if (sch_Task[i].delay > 0) {
 				sch_Task[i].delay -= TICK_TIME;
 			}
 			else {
-				sch_Task[i].ready = 1;
+				sch_Task[i].ready += 1;
+				if (sch_Task[i].period != 0) {
+					//make the task wait for "period" and run again
+					sch_Task[i].delay = sch_Task[i].period;
+				} //if period == 0, we don't want it to execute again, so we do nothing here
 			}
 		}
 	}
@@ -53,15 +74,15 @@ void SCH_Update(void) {
 
 void SCH_Dispactch_Tasks(void) {
 	//for loop: present FIFO, the first task will execute first.
-	for(int i = 0; i < MAX_TASK; i++) {
-		if (sch_Task[i].pFunc != NULL && sch_Task[i].ready == 1) {
+	for(int i = 0; i < queue_size; i++) {
+		if (sch_Task[i].pFunc != NULL && sch_Task[i].ready > 0) {
 			//run the task
-			sch_Task[i].pFunc();
-			//make the task wait for "period" and run again
-			if (sch_Task[i].period != 0) {
-				sch_Task[i].delay = sch_Task[i].period;
-				sch_Task[i].ready = 0;
-			} else {	//if period = 0, we don't want it to execute again
+			//dereference it first, and then run.
+			(*sch_Task[i].pFunc)();
+			sch_Task[i].ready -= 1;
+			//in case the task only run once, if it's scheduled to run, we need to run it first
+			//(keep the function there to run) and then only after it has done, delete the task.
+			if (sch_Task[i].period == 0) {	//if period = 0, we don't want it to execute again
 				SCH_Delete_Task(i);
 			}
 		}
