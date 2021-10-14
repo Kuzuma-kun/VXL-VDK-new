@@ -21,8 +21,6 @@ struct SCH_Task {
 #define MAX_TASK 	5
 #define TICK_TIME 	10
 
-struct SCH_Task extern sch_Task[MAX_TASK];
-
 void SCH_Init();
 uint32_t SCH_Add_Task(void(*pFunction)(), uint32_t DELAY, uint32_t PERIOD);
 uint8_t SCH_Delete_Task(uint32_t taskID);

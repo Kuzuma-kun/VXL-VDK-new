@@ -120,10 +120,11 @@ int main(void)
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
-	char timeformat[30];
+  HAL_TIM_Base_Start_IT(&htim3);
+	static char timeformat[30];
 	uint32_t time_ms = HAL_GetTick();
 	int strlength = sprintf(timeformat, "init: %ld\r\n", time_ms);
-	HAL_UART_Transmit(&huart1, (uint8_t*)timeformat, strlength, 10 * strlength);
+	HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeformat, strlength);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -422,15 +423,56 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	}
 }
 
-char timeFormat[20];
+int more_task_counter = 0;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+//	if (htim->Instance == TIM3) {
+//			switch(more_task_counter) {
+//			case 0:
+//				if (SCH_Add_Task(task1, 0, 0) == -1) {
+//					static uint8_t max_queue[] = {"Queue is full"};
+//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+//				}
+//				break;
+//			case 1:{
+//				if (SCH_Add_Task(task2, 0, 0) == -1) {
+//					static uint8_t max_queue[] = {"Queue is full"};
+//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+//				}
+//				break;
+//			}
+//			case 2:
+//				if (SCH_Add_Task(task3, 0, 0) == -1) {
+//					static uint8_t max_queue[] = {"Queue is full"};
+//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+//				}
+//				break;
+//			case 3:
+//				if (SCH_Add_Task(task4, 0, 0) == -1) {
+//					static uint8_t max_queue[] = {"Queue is full"};
+//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+//				}
+//				break;
+//			case 4:
+//				if (SCH_Add_Task(task5, 0, 0) == -1) {
+//					static uint8_t max_queue[] = {"Queue is full"};
+//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+//				}
+//				break;
+//			}
+//			more_task_counter = (more_task_counter + 1) % 5;
+//		}
+
 	if (htim->Instance == TIM2) {
-		uint32_t time_ms = HAL_GetTick();
+//		static char timeFormat[30];
+//		uint32_t time_ms = HAL_GetTick();
+//		int strlength = sprintf(timeFormat, "%ld\r\n", time_ms);
+//		//int strlength = sprintf(timeFormat, "%ld, task1 delay: %ld\r\n", time_ms, getTaskDelay(0));
+//		HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
+
 		//HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BCD);
-		int strlength = sprintf(timeFormat, "%ld\r\n", time_ms);
-		//int strlength = sprintf(timeFormat, "%ld, task1 delay: %ld\r\n", time_ms, getTaskDelay(0));
-		HAL_UART_Transmit(&huart1, (uint8_t*)timeFormat, strlength, 10 * strlength);
+
 		SCH_Update();
+
 		counter--;
 		if (counter == 0) {
 			counter = 100;
