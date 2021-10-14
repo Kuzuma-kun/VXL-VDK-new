@@ -41,8 +41,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-RTC_HandleTypeDef hrtc;
-
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 
@@ -58,7 +56,6 @@ static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM3_Init(void);
-static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -117,7 +114,6 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   MX_TIM3_Init();
-  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_Base_Start_IT(&htim3);
@@ -133,11 +129,11 @@ int main(void)
   //NO RECEIVE
   //HAL_UART_Receive_IT(&huart1, &rData, 1);
   SCH_Init();
-  SCH_Add_Task(task1, 500, 0);
-  SCH_Add_Task(task2, 1000, 0);
-  SCH_Add_Task(task3, 1500, 0);
-  SCH_Add_Task(task4, 2000, 0);
-  SCH_Add_Task(task5, 2500, 0);
+  SCH_Add_Task(task1, 700, 0);
+  SCH_Add_Task(task2, 1200, 0);
+  SCH_Add_Task(task3, 1700, 0);
+  SCH_Add_Task(task4, 2200, 0);
+  SCH_Add_Task(task5, 2700, 0);
   while (1)
   {
 	  //HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
@@ -158,15 +154,13 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
@@ -185,69 +179,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
-  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSI;
-  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
-  {
-    Error_Handler();
-  }
-}
-
-/**
-  * @brief RTC Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_RTC_Init(void)
-{
-
-  /* USER CODE BEGIN RTC_Init 0 */
-
-  /* USER CODE END RTC_Init 0 */
-
-  RTC_TimeTypeDef sTime = {0};
-  RTC_DateTypeDef DateToUpdate = {0};
-
-  /* USER CODE BEGIN RTC_Init 1 */
-
-  /* USER CODE END RTC_Init 1 */
-  /** Initialize RTC Only
-  */
-  hrtc.Instance = RTC;
-  hrtc.Init.AsynchPrediv = RTC_AUTO_1_SECOND;
-  hrtc.Init.OutPut = RTC_OUTPUTSOURCE_ALARM;
-  if (HAL_RTC_Init(&hrtc) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /* USER CODE BEGIN Check_RTC_BKUP */
-
-  /* USER CODE END Check_RTC_BKUP */
-
-  /** Initialize RTC and set the Time and Date
-  */
-  sTime.Hours = 0x0;
-  sTime.Minutes = 0x0;
-  sTime.Seconds = 0x0;
-
-  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  DateToUpdate.WeekDay = RTC_WEEKDAY_MONDAY;
-  DateToUpdate.Month = RTC_MONTH_JANUARY;
-  DateToUpdate.Date = 0x1;
-  DateToUpdate.Year = 0x0;
-
-  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN RTC_Init 2 */
-
-  /* USER CODE END RTC_Init 2 */
-
 }
 
 /**
@@ -269,9 +200,9 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 7999;
+  htim2.Init.Prescaler = 799;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 9;
+  htim2.Init.Period = 99;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -425,51 +356,48 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 int more_task_counter = 0;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-//	if (htim->Instance == TIM3) {
-//			switch(more_task_counter) {
-//			case 0:
-//				if (SCH_Add_Task(task1, 0, 0) == -1) {
-//					static uint8_t max_queue[] = {"Queue is full"};
-//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-//				}
-//				break;
-//			case 1:{
-//				if (SCH_Add_Task(task2, 0, 0) == -1) {
-//					static uint8_t max_queue[] = {"Queue is full"};
-//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-//				}
-//				break;
-//			}
-//			case 2:
-//				if (SCH_Add_Task(task3, 0, 0) == -1) {
-//					static uint8_t max_queue[] = {"Queue is full"};
-//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-//				}
-//				break;
-//			case 3:
-//				if (SCH_Add_Task(task4, 0, 0) == -1) {
-//					static uint8_t max_queue[] = {"Queue is full"};
-//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-//				}
-//				break;
-//			case 4:
-//				if (SCH_Add_Task(task5, 0, 0) == -1) {
-//					static uint8_t max_queue[] = {"Queue is full"};
-//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-//				}
-//				break;
-//			}
-//			more_task_counter = (more_task_counter + 1) % 5;
-//		}
+	if (htim->Instance == TIM3) {
+			switch(more_task_counter) {
+			case 0:
+				if (SCH_Add_Task(task1, 0, 0) == -1) {
+					static uint8_t max_queue[] = {"Queue is full\r\n"};
+					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+				}
+				break;
+			case 1:{
+				if (SCH_Add_Task(task2, 0, 0) == -1) {
+					static uint8_t max_queue[] = {"Queue is full\r\n"};
+					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+				}
+				break;
+			}
+			case 2:
+				if (SCH_Add_Task(task3, 0, 0) == -1) {
+					static uint8_t max_queue[] = {"Queue is full\r\n"};
+					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+				}
+				break;
+			case 3:
+				if (SCH_Add_Task(task4, 0, 0) == -1) {
+					static uint8_t max_queue[] = {"Queue is full\r\n"};
+					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+				}
+				break;
+			case 4:
+				if (SCH_Add_Task(task5, 0, 0) == -1) {
+					static uint8_t max_queue[] = {"Queue is full\r\n"};
+					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+				}
+				break;
+			}
+			more_task_counter = (more_task_counter + 1) % 5;
+		}
 
 	if (htim->Instance == TIM2) {
 //		static char timeFormat[30];
 //		uint32_t time_ms = HAL_GetTick();
 //		int strlength = sprintf(timeFormat, "%ld\r\n", time_ms);
-//		//int strlength = sprintf(timeFormat, "%ld, task1 delay: %ld\r\n", time_ms, getTaskDelay(0));
 //		HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
-
-		//HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BCD);
 
 		SCH_Update();
 

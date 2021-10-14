@@ -90,7 +90,7 @@ void SCH_Dispactch_Tasks(void) {
 			//use static so the buffer will live longer, long enough to send all data to the UART.
 			static char timeFormat[30];
 			uint32_t time_ms = HAL_GetTick();
-			int strlength = sprintf(timeFormat, "task done: %ld\r\n", time_ms);
+			int strlength = sprintf(timeFormat, "%ld :task done\r\n", time_ms);
 			HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
 			//call, and then return. This function does not "block" as HAL_UART_Transmit that wait for all byte to send.
 			//since _IT will end quickly, if the buffer is not static, buffer might be destroyed before all the data
