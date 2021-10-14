@@ -359,32 +359,32 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM3) {
 			switch(more_task_counter) {
 			case 0:
-				if (SCH_Add_Task(task1, 0, 0) == -1) {
+				if (SCH_Add_Task(task1, 10, 0) == -1) {
 					static uint8_t max_queue[] = {"Queue is full\r\n"};
 					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
 				}
 				break;
 			case 1:{
-				if (SCH_Add_Task(task2, 0, 0) == -1) {
+				if (SCH_Add_Task(task2, 10, 0) == -1) {
 					static uint8_t max_queue[] = {"Queue is full\r\n"};
 					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
 				}
 				break;
 			}
 			case 2:
-				if (SCH_Add_Task(task3, 0, 0) == -1) {
+				if (SCH_Add_Task(task3, 10, 0) == -1) {
 					static uint8_t max_queue[] = {"Queue is full\r\n"};
 					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
 				}
 				break;
 			case 3:
-				if (SCH_Add_Task(task4, 0, 0) == -1) {
+				if (SCH_Add_Task(task4, 10, 0) == -1) {
 					static uint8_t max_queue[] = {"Queue is full\r\n"};
 					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
 				}
 				break;
 			case 4:
-				if (SCH_Add_Task(task5, 0, 0) == -1) {
+				if (SCH_Add_Task(task5, 10, 0) == -1) {
 					static uint8_t max_queue[] = {"Queue is full\r\n"};
 					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
 				}

@@ -7,12 +7,15 @@
 //REJECT HUMANITY, RETURN TO MONNKEY
 //THIS WON'T ACT AS A QUEUE, BUT THE COMPLEXITY OF THE CODE IS REDUCED
 //DELETE TASK NO LONGER O(N^2), BUT O(1)
-//ADD TASK IS O(N), UPDATE TOO.
+//ADD TASK IS O(N), UPDATE TOO (but better).
 #include "Scheduler.h"
 #include "string.h"		//needed for memmove
 #include "main.h"
 
 static struct SCH_Task sch_Task[MAX_TASK];
+
+static uint32_t tick_time = 0; //TICK_TIME
+static uint32_t min_delay = 0xffffffff;
 
 UART_HandleTypeDef huart1;
 void SCH_Init(void) {
@@ -24,6 +27,12 @@ void SCH_Init(void) {
 	}
 }
 
+//in this add_task function, to make sure that min_delay is working, we will:
+// + if tick_time (current time) + DELAY < min_delay, update min_delay
+// + newtask.delay of the new task will be tick_time + DELAY, no matter this value is greater or lesser than current min_delay.
+// 		because, if the value is greater, it will be subtract by SCH_Update when tick_time == min_delay.
+//		or if value is lesser, this will be our new min_delay, and with SCH_Update, tick_time will soon = min_delay = newtask.delay, and task will be
+// 		executed.
 uint32_t SCH_Add_Task(void(*pFunction)(), uint32_t DELAY, uint32_t PERIOD) {
 
 	//find an empty slot to put the task in.
@@ -34,10 +43,14 @@ uint32_t SCH_Add_Task(void(*pFunction)(), uint32_t DELAY, uint32_t PERIOD) {
 	//if the queue is full
 	if (index >= MAX_TASK) return -1;
 	//if a slot is found (queue still have some space)
-	sch_Task[index].delay = DELAY;
+	if (tick_time + DELAY < min_delay) {
+		min_delay = tick_time + DELAY;
+	}
+	sch_Task[index].delay = tick_time + DELAY;
 	sch_Task[index].pFunc = pFunction;
 	sch_Task[index].period = PERIOD;
 	sch_Task[index].ready = 0;
+
 	return (index);
 }
 
@@ -54,28 +67,40 @@ uint8_t SCH_Delete_Task(uint32_t taskID) {
 	return 1;
 }
 
+//in this function, every time it's called, it will increase tick_time by TICK_TIME.
+//if tick_time == min_delay, we search through the array and subtract each delay by
+//the current min_delay. While searching, we also find the new min_delay.
+//after update all the delay value, we have a new min_delay, and tick_time is set to 0.
+//this tick_time will continue to count up till reach the min_delay, and then we go update everything again.
+//remember, we only update the new_min delay value if the delay value is > 0.
+//with this, we only search through the array if tick_time == min_delay.
+
 void SCH_Update(void) {
-	for(int i = 0; i < MAX_TASK; i++) {
-		if (sch_Task[i].pFunc != 0) {
-			if (sch_Task[i].delay > 0) {
-				sch_Task[i].delay -= TICK_TIME;
-				//time is over!
+	tick_time += TICK_TIME;
+//	this 3 lines printout min_time and tick_time.
+//	static char timeFormat[30];
+//	int strlength = sprintf(timeFormat, "min: %ld, tick: %ld\r\n", min_delay, tick_time);
+//	HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
+	if (tick_time == min_delay) {		//if tick_time equal min_delay, there must be at least one task will be executed.
+		uint32_t new_min = 0xffffffff;
+		for(int i = 0; i < MAX_TASK; i++) {
+			if (sch_Task[i].pFunc != 0) {
+				sch_Task[i].delay -= min_delay;
 				if (sch_Task[i].delay == 0) {
+					//schedule the task to run
 					sch_Task[i].ready += 1;
 					if (sch_Task[i].period != 0) {
 						//make the task wait for "period" and run again
 						sch_Task[i].delay = sch_Task[i].period;
 					} //if period == 0, we don't want it to execute again, so we do nothing here
 				}
-			} else {
-				//if the task has delay = 0 from the beginning, we want it to be execute right away
-				sch_Task[i].ready += 1;
-				if (sch_Task[i].period != 0) {
-					//make the task wait for "period" and run again
-					sch_Task[i].delay = sch_Task[i].period;
-				} //if period == 0, we don't want it to execute again, so we do nothing here
+				if (sch_Task[i].delay < new_min && sch_Task[i].delay > 0) {
+					new_min = sch_Task[i].delay;
+				}
 			}
 		}
+		min_delay = new_min;
+		tick_time = 0;
 	}
 }
 
