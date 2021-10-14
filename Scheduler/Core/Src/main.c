@@ -357,6 +357,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 int more_task_counter = 0;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM3) {
+		//cho them moi task 1 khoan delay nho (10ms) cho an toan. dung ra la nho delay nay thi task moi duoc thuc thi
+		//vi TIM3 va TIM2 goi cung 1 luc, xay ra truong hop TIM2 chay truoc, update tick_time truoc (=300), sau do addTask lam sau
+		//thi no se = tick_time + DELAY = 300 = min_delay luon, va sau 10ms, tick_time da la 310 > min_delay, tick time chay luon, ko qua tro lai.
 			switch(more_task_counter) {
 			case 0:
 				if (SCH_Add_Task(task1, 10, 0) == -1) {

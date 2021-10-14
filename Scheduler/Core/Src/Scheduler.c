@@ -81,7 +81,7 @@ void SCH_Update(void) {
 //	static char timeFormat[30];
 //	int strlength = sprintf(timeFormat, "min: %ld, tick: %ld\r\n", min_delay, tick_time);
 //	HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
-	if (tick_time == min_delay) {		//if tick_time equal min_delay, there must be at least one task will be executed.
+	if (tick_time == min_delay) {		//if tick_time == min_delay, there must be at least one task will be executed.
 		uint32_t new_min = 0xffffffff;
 		for(int i = 0; i < MAX_TASK; i++) {
 			if (sch_Task[i].pFunc != 0) {
