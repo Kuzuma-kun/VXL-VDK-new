@@ -19,3 +19,27 @@ Scheduler/Core/Src/system_stm32f1xx.c
 Scheduler/Core/Startup/startup_stm32f103c6tx.s
 Scheduler/Scheduler.ioc
 Scheduler/STM32F103C6TX_FLASH.ld
+*.xml
+*.prefs
+STM32/Interrupt/.project
+STM32/Interrupt/.mxproject
+STM32/Interrupt/.cproject
+STM32/Interrupt/Core/Src/stm32f1xx_it.c
+STM32/Interrupt/Debug/
+STM32/Interrupt/Drivers/
+Proteus/Interrupt/Interrupt.pdsprj.NARUKIRI.ngocc.workspace
+Proteus/Interrupt/Project Backups/Interrupt [Autosaved].pdsprj
+Proteus/Interrupt/Project Backups/Interrupt [20211015, 10-20-33].pdsprj
+Proteus/Interrupt/Project Backups/Interrupt [Autosaved].pdsprj
+Proteus/Interrupt/Project Backups/Interrupt [20211015, 10-20-33].pdsprj
+STM32/Interrupt/Core/Inc/stm32f1xx_hal_conf.h
+STM32/Interrupt/Core/Inc/stm32f1xx_it.h
+STM32/Interrupt/Core/Src/stm32f1xx_hal_msp.c
+STM32/Interrupt/Core/Src/syscalls.c
+STM32/Interrupt/Core/Src/sysmem.c
+STM32/Interrupt/Core/Src/system_stm32f1xx.c
+STM32/Interrupt/Core/Startup/startup_stm32f103c6tx.s
+STM32/Interrupt/STM32F103C6TX_FLASH.ld
+STM32/Interrupt/Interrupt.ioc
+Proteus/Interrupt/Project Backups/Interrupt [Autosaved].pdsprj
+Proteus/Interrupt/Project Backups/Interrupt [20211015, 10-20-33].pdsprj
