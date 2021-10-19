@@ -68,30 +68,60 @@ uint8_t SCH_Delete_Task(uint32_t taskID) {
 }
 
 //in this function, every time it's called, it will increase tick_time by TICK_TIME.
-//if tick_time == min_delay, we search through the array and subtract each delay by
-//the current min_delay. While searching, we also find the new min_delay.
-//after update all the delay value, we have a new min_delay, and tick_time is set to 0.
-//this tick_time will continue to count up till reach the min_delay, and then we go update everything again.
-//remember, we only update the new_min delay value if the delay value is > 0.
-//with this, we only search through the array if tick_time == min_delay.
 
-void SCH_Update(void) {
+
+void SCH_Update(void) {		//tai sao minh lai co khien ham SCH_update khong O(n)?
+	//boi vi SCH_update duoc dat trong timer. ta khong duoc de SCH_Update chay qua lau gay tran timer
+	//co the khien he thong bi treo
 	tick_time += TICK_TIME;
 //	this 3 lines printout min_time and tick_time.
 //	static char timeFormat[30];
 //	int strlength = sprintf(timeFormat, "min: %ld, tick: %ld\r\n", min_delay, tick_time);
 //	HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
-	if (tick_time == min_delay) {		//if tick_time == min_delay, there must be at least one task will be executed.
+
+}
+
+//if tick_time == min_delay, we search through the array and subtract each delay by
+//the current tick_time. While searching, we also find the new min_delay.
+//after update all the delay value, we have a new min_delay, and tick_time is set to 0.
+//this tick_time will continue to count up till reach the min_delay, and then we go update everything again.
+//---------------------------------------------------------------------------------------------------------
+//example:
+//if somehow, min_delay is 500 and tick_time is 600, and the next task will execute in 1000. these two task's period is 0
+//current task delay: 500 - 600 = -100 -> ready++;
+//next task delay: 1000 - 600 = 400. because there's no other task, this will be our new min_delay
+//tick_time is set back to 0. it will then count up to 400 and next task will be execute at the right time (1000)
+//remember, we only update the new_min delay value if the delay value is > 0.
+//-----------------------------------------------------------------------------------------------------------
+//if tick_time >= min_delay, there must be at least one task will be executed.s
+//if tick_time > min_delay, this mean there's one task that run too long in dispact_task.
+//then, when this function is called, tick_time is way larger than min_delay. in that case,
+//we have to decrease all task delay by tick_time. If we're lucky, new delay is > 0, and the
+//scheduler run normally. but, if the delay is < 0, mean that the task is supposed to run while dispact_task was running.
+//so we increase the ready value by one. If that task with negative delay value have period, we increase the delay with period.
+//if even after we increase the delay, it's still < 0, that mean the task is scheduled to run multiple times while we stuck at dispact_task, not just once.
+//So, we'll check for the delay, continuously add that task delay with period and increase ready if that task delay is still <= 0
+//By doing like this, even if some tasks is scheduled to run while we stuck at dispact_task, these tasks won't be skipped;
+//the scheduler will run these tasks, eventually.
+void SCH_Check_Ready_Task() {
+	if (tick_time >= min_delay) {
+			static char timeFormat[30];
+			int strlength = sprintf(timeFormat, "min: %ld, tick: %ld\r\n", min_delay, tick_time);
+			HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
 		uint32_t new_min = 0xffffffff;
 		for(int i = 0; i < MAX_TASK; i++) {
 			if (sch_Task[i].pFunc != 0) {
-				sch_Task[i].delay -= min_delay;
-				if (sch_Task[i].delay == 0) {
+				sch_Task[i].delay -= tick_time;
+				if (sch_Task[i].delay <= 0) {
 					//schedule the task to run
 					sch_Task[i].ready += 1;
 					if (sch_Task[i].period != 0) {
-						//make the task wait for "period" and run again
-						sch_Task[i].delay = sch_Task[i].period;
+						sch_Task[i].delay += sch_Task[i].period;
+						while(sch_Task[i].delay <= 0) {
+							//make the task wait for "period" and run again
+							sch_Task[i].delay += sch_Task[i].period;
+							sch_Task[i].ready += 1;
+						}
 					} //if period == 0, we don't want it to execute again, so we do nothing here
 				}
 				if (sch_Task[i].delay < new_min && sch_Task[i].delay > 0) {
@@ -132,8 +162,5 @@ void SCH_Dispactch_Tasks(void) {
 	}
 }
 
-uint32_t getTaskDelay(int index) {
-	return sch_Task[index].delay;
-}
 
 

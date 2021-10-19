@@ -66,6 +66,7 @@ uint8_t tData[] = {"Hello from me!\r\n"};
 uint8_t rData;
 void task1(void) {
 	HAL_GPIO_TogglePin(GPIOB, T1_Pin);
+	HAL_Delay(1000);
 }
 void task2(void) {
 	HAL_GPIO_TogglePin(GPIOB, T2_Pin);
@@ -130,14 +131,15 @@ int main(void)
   //HAL_UART_Receive_IT(&huart1, &rData, 1);
   SCH_Init();
   SCH_Add_Task(task1, 700, 0);
-  SCH_Add_Task(task2, 1200, 0);
-  SCH_Add_Task(task3, 1700, 0);
-  SCH_Add_Task(task4, 2200, 0);
-  SCH_Add_Task(task5, 2700, 0);
+  SCH_Add_Task(task2, 710, 0);
+  SCH_Add_Task(task3, 720, 200);
+  SCH_Add_Task(task4, 730, 0);
+  SCH_Add_Task(task5, 740, 0);
   while (1)
   {
 	  //HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
 	  //HAL_Delay(1000);
+	  SCH_Check_Ready_Task();
 	  SCH_Dispactch_Tasks();
     /* USER CODE END WHILE */
 
@@ -356,45 +358,45 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 int more_task_counter = 0;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	if (htim->Instance == TIM3) {
-		//cho them moi task 1 khoan delay nho (10ms) cho an toan. dung ra la nho delay nay thi task moi duoc thuc thi
-		//vi TIM3 va TIM2 goi cung 1 luc, xay ra truong hop TIM2 chay truoc, update tick_time truoc (=300), sau do addTask lam sau
-		//thi no se = tick_time + DELAY = 300 = min_delay luon, va sau 10ms, tick_time da la 310 > min_delay, tick time chay luon, ko qua tro lai.
-			switch(more_task_counter) {
-			case 0:
-				if (SCH_Add_Task(task1, 10, 0) == -1) {
-					static uint8_t max_queue[] = {"Queue is full\r\n"};
-					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-				}
-				break;
-			case 1:{
-				if (SCH_Add_Task(task2, 10, 0) == -1) {
-					static uint8_t max_queue[] = {"Queue is full\r\n"};
-					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-				}
-				break;
-			}
-			case 2:
-				if (SCH_Add_Task(task3, 10, 0) == -1) {
-					static uint8_t max_queue[] = {"Queue is full\r\n"};
-					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-				}
-				break;
-			case 3:
-				if (SCH_Add_Task(task4, 10, 0) == -1) {
-					static uint8_t max_queue[] = {"Queue is full\r\n"};
-					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-				}
-				break;
-			case 4:
-				if (SCH_Add_Task(task5, 10, 0) == -1) {
-					static uint8_t max_queue[] = {"Queue is full\r\n"};
-					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-				}
-				break;
-			}
-			more_task_counter = (more_task_counter + 1) % 5;
-		}
+//	if (htim->Instance == TIM3) {
+//		//cho them moi task 1 khoan delay nho (10ms) cho an toan. dung ra la nho delay nay thi task moi duoc thuc thi
+//		//vi TIM3 va TIM2 goi cung 1 luc, xay ra truong hop TIM2 chay truoc, update tick_time truoc (=300), sau do addTask lam sau
+//		//thi no se = tick_time + DELAY = 300 = min_delay luon, va sau 10ms, tick_time da la 310 > min_delay, tick time chay luon, ko qua tro lai.
+//			switch(more_task_counter) {
+//			case 0:
+//				if (SCH_Add_Task(task1, 10, 0) == -1) {
+//					static uint8_t max_queue[] = {"Queue is full\r\n"};
+//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+//				}
+//				break;
+//			case 1:{
+//				if (SCH_Add_Task(task2, 10, 0) == -1) {
+//					static uint8_t max_queue[] = {"Queue is full\r\n"};
+//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+//				}
+//				break;
+//			}
+//			case 2:
+//				if (SCH_Add_Task(task3, 10, 0) == -1) {
+//					static uint8_t max_queue[] = {"Queue is full\r\n"};
+//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+//				}
+//				break;
+//			case 3:
+//				if (SCH_Add_Task(task4, 10, 0) == -1) {
+//					static uint8_t max_queue[] = {"Queue is full\r\n"};
+//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+//				}
+//				break;
+//			case 4:
+//				if (SCH_Add_Task(task5, 10, 0) == -1) {
+//					static uint8_t max_queue[] = {"Queue is full\r\n"};
+//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+//				}
+//				break;
+//			}
+//			more_task_counter = (more_task_counter + 1) % 5;
+//		}
 
 	if (htim->Instance == TIM2) {
 //		static char timeFormat[30];
