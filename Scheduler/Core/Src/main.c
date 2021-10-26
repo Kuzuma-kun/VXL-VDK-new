@@ -41,6 +41,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+IWDG_HandleTypeDef hiwdg;
+
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 
@@ -56,6 +58,7 @@ static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_IWDG_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -66,7 +69,6 @@ uint8_t tData[] = {"Hello from me!\r\n"};
 uint8_t rData;
 void task1(void) {
 	HAL_GPIO_TogglePin(GPIOB, T1_Pin);
-	HAL_Delay(1000);
 }
 void task2(void) {
 	HAL_GPIO_TogglePin(GPIOB, T2_Pin);
@@ -115,6 +117,7 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   MX_TIM3_Init();
+  MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_TIM_Base_Start_IT(&htim3);
@@ -122,6 +125,8 @@ int main(void)
 	uint32_t time_ms = HAL_GetTick();
 	int strlength = sprintf(timeformat, "init: %ld\r\n", time_ms);
 	HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeformat, strlength);
+	//THIS IS A FUNCTION TO INIT THE WATCH DOG TIMER. WELL, WE WON'T USE IT HERE
+	//HAL_IWDG_Init(&hiwdg);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -132,7 +137,7 @@ int main(void)
   SCH_Init();
   SCH_Add_Task(task1, 700, 0);
   SCH_Add_Task(task2, 710, 0);
-  SCH_Add_Task(task3, 720, 200);
+  SCH_Add_Task(task3, 720, 0);
   SCH_Add_Task(task4, 730, 0);
   SCH_Add_Task(task5, 740, 0);
   while (1)
@@ -160,9 +165,10 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
@@ -181,6 +187,34 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief IWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_IWDG_Init(void)
+{
+
+  /* USER CODE BEGIN IWDG_Init 0 */
+
+  /* USER CODE END IWDG_Init 0 */
+
+  /* USER CODE BEGIN IWDG_Init 1 */
+
+  /* USER CODE END IWDG_Init 1 */
+  hiwdg.Instance = IWDG;
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_32;
+  hiwdg.Init.Reload = 4095;
+  if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN IWDG_Init 2 */
+
+  /* USER CODE END IWDG_Init 2 */
+
 }
 
 /**
@@ -325,7 +359,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, T1_Pin|T2_Pin|T3_Pin|T4_Pin
-                          |T5_Pin, GPIO_PIN_RESET);
+                          |T5_Pin|ERROR1_Pin|ERROR2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : LED_RED_Pin */
   GPIO_InitStruct.Pin = LED_RED_Pin;
@@ -335,9 +369,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(LED_RED_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : T1_Pin T2_Pin T3_Pin T4_Pin
-                           T5_Pin */
+                           T5_Pin ERROR1_Pin ERROR2_Pin */
   GPIO_InitStruct.Pin = T1_Pin|T2_Pin|T3_Pin|T4_Pin
-                          |T5_Pin;
+                          |T5_Pin|ERROR1_Pin|ERROR2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -357,46 +391,52 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 int more_task_counter = 0;
+int divider = 6;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-//	if (htim->Instance == TIM3) {
-//		//cho them moi task 1 khoan delay nho (10ms) cho an toan. dung ra la nho delay nay thi task moi duoc thuc thi
-//		//vi TIM3 va TIM2 goi cung 1 luc, xay ra truong hop TIM2 chay truoc, update tick_time truoc (=300), sau do addTask lam sau
-//		//thi no se = tick_time + DELAY = 300 = min_delay luon, va sau 10ms, tick_time da la 310 > min_delay, tick time chay luon, ko qua tro lai.
-//			switch(more_task_counter) {
-//			case 0:
-//				if (SCH_Add_Task(task1, 10, 0) == -1) {
-//					static uint8_t max_queue[] = {"Queue is full\r\n"};
-//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-//				}
-//				break;
-//			case 1:{
-//				if (SCH_Add_Task(task2, 10, 0) == -1) {
-//					static uint8_t max_queue[] = {"Queue is full\r\n"};
-//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-//				}
-//				break;
-//			}
-//			case 2:
-//				if (SCH_Add_Task(task3, 10, 0) == -1) {
-//					static uint8_t max_queue[] = {"Queue is full\r\n"};
-//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-//				}
-//				break;
-//			case 3:
-//				if (SCH_Add_Task(task4, 10, 0) == -1) {
-//					static uint8_t max_queue[] = {"Queue is full\r\n"};
-//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-//				}
-//				break;
-//			case 4:
-//				if (SCH_Add_Task(task5, 10, 0) == -1) {
-//					static uint8_t max_queue[] = {"Queue is full\r\n"};
-//					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-//				}
-//				break;
-//			}
-//			more_task_counter = (more_task_counter + 1) % 5;
-//		}
+	if (htim->Instance == TIM3) {
+		//cho them moi task 1 khoan delay nho (10ms) cho an toan. dung ra la nho delay nay thi task moi duoc thuc thi
+		//vi TIM3 va TIM2 goi cung 1 luc, xay ra truong hop TIM2 chay truoc, update tick_time truoc (=300), sau do addTask lam sau
+		//thi no se = tick_time + DELAY = 300 = min_delay luon, va sau 10ms, tick_time da la 310 > min_delay, tick time chay luon, ko qua tro lai.
+			switch(more_task_counter) {
+			case 0:
+				if (SCH_Add_Task(task1, 10, 0) == MAX_TASK) {
+					static uint8_t max_queue[] = {"Queue is full\r\n"};
+					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+				}
+				break;
+			case 1:{
+				if (SCH_Add_Task(task2, 10, 0) == MAX_TASK) {
+					static uint8_t max_queue[] = {"Queue is full\r\n"};
+					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+				}
+				break;
+			}
+			case 2:
+				if (SCH_Add_Task(task3, 10, 0) == MAX_TASK) {
+					static uint8_t max_queue[] = {"Queue is full\r\n"};
+					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+				}
+				break;
+			case 3:
+				if (SCH_Add_Task(task4, 10, 0) == MAX_TASK) {
+					static uint8_t max_queue[] = {"Queue is full\r\n"};
+					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+				}
+				break;
+			case 4:
+				if (SCH_Add_Task(task5, 10, 0) == MAX_TASK) {
+					static uint8_t max_queue[] = {"Queue is full\r\n"};
+					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+				}
+				break;
+			case 5:
+				SCH_Delete_Task(0);
+				divider = 5;
+				break;
+			}
+
+			more_task_counter = (more_task_counter + 1) % divider;
+		}
 
 	if (htim->Instance == TIM2) {
 //		static char timeFormat[30];

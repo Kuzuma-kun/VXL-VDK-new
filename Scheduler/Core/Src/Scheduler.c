@@ -12,12 +12,17 @@
 #include "string.h"		//needed for memmove
 #include "main.h"
 
-static struct SCH_Task sch_Task[MAX_TASK];
 
+//SCHEDULE SECTION------------------------------------------------------------------------
+static struct SCH_Task sch_Task[MAX_TASK];
 static uint32_t tick_time = 0; //TICK_TIME
 static uint32_t min_delay = 0xffffffff;
+UART_HandleTypeDef huart1;		//NEEDED to use UART
+IWDG_HandleTypeDef hiwdg;		//NEEDED for watchdog Timer
 
-UART_HandleTypeDef huart1;
+unsigned char Error_code_G;
+unsigned char Last_error_code_G;
+
 void SCH_Init(void) {
 	for(int i = 0; i < MAX_TASK; i++) {
 		sch_Task[i].delay = 0;
@@ -25,7 +30,23 @@ void SCH_Init(void) {
 		sch_Task[i].period = 0;
 		sch_Task[i].ready = 0;
 	}
+
+	//init Error code
+	Error_code_G = 0;
+	//START A WATCHDOG TIMER. THIS IS PUT AT THE START (INIT) OF THE SCHEDULER.
+	//WATCHDOG TIMER IS A TYPE OF SOFTWARE TIMER THAT CAN RESET THE ENTIRE CHIP IF
+	//THE SYSTEM IS STUCK, ONLY AFTER A timeout. We can specify the timeout in .ioc, IWDG.
+	//timeout = (prescaller divider) * (reload value) / LSI frequency
+	HAL_IWDG_Init(&hiwdg);
+	//Since the timer is start, it will start counting down. If it reach 0, the microprocessor will be reset.
+	//Then how to use it? If we let it count down to 0, then that mean the system is hang, then the system won't run at all,
+	//it can't even call function. That mean, if the function is called regularly, then the system is fine. this function will be our SCH_update which is
+	//called every 10ms. in this function, we will always reset the watchdog timer (to timeout) and let it count down again. This way, if the system run
+	//normally, watchdog timer will always be reset, and it won't reset the microprocessor. BUT, in case the system is hang, SCH_update won't be call at all
+	//and the time elapsed pass the timeout -> watchdog timer reach 0 -> reset the microprocessor.
 }
+
+
 
 //in this add_task function, to make sure that min_delay is working, we will:
 // + if tick_time (current time) + DELAY < min_delay, update min_delay
@@ -41,7 +62,13 @@ uint32_t SCH_Add_Task(void(*pFunction)(), uint32_t DELAY, uint32_t PERIOD) {
 		index++;
 	}
 	//if the queue is full
-	if (index >= MAX_TASK) return -1;
+	if (index >= MAX_TASK) {
+		//Task list is full
+		// Set the global error variable
+		Error_code_G = ERROR_SCH_TOO_MANY_TASKS;
+		//also return an error code
+		return MAX_TASK;
+	}
 	//if a slot is found (queue still have some space)
 	if (tick_time + DELAY < min_delay) {
 		min_delay = tick_time + DELAY;
@@ -55,16 +82,25 @@ uint32_t SCH_Add_Task(void(*pFunction)(), uint32_t DELAY, uint32_t PERIOD) {
 }
 
 uint8_t SCH_Delete_Task(uint32_t taskID) {
+	unsigned char Return_code;
 	if (taskID < 0 || taskID >= MAX_TASK || sch_Task[taskID].pFunc == NULL) {
-		return -1;
+		// No task at this location...
+		//
+		// Set the global error variable
+		Error_code_G = ERROR_SCH_CANNOT_DELETE_TASK;
+
+		// ...also return an error code
+		Return_code = RETURN_ERROR;
+	} else {
+		Return_code = RETURN_NORMAL;
 	}
-	//if index is at the end of queue, simply assign everything = 0.
+
 	sch_Task[taskID].delay = 0;
 	sch_Task[taskID].pFunc = NULL;
 	sch_Task[taskID].period = 0;
 	sch_Task[taskID].ready = 0;
-	// return 1 if success
-	return 1;
+
+	return Return_code;
 }
 
 //in this function, every time it's called, it will increase tick_time by TICK_TIME.
@@ -78,7 +114,7 @@ void SCH_Update(void) {		//tai sao minh lai co khien ham SCH_update khong O(n)?
 //	static char timeFormat[30];
 //	int strlength = sprintf(timeFormat, "min: %ld, tick: %ld\r\n", min_delay, tick_time);
 //	HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
-
+	HAL_IWDG_Refresh(&hiwdg);
 }
 
 //if tick_time == min_delay, we search through the array and subtract each delay by
@@ -105,9 +141,9 @@ void SCH_Update(void) {		//tai sao minh lai co khien ham SCH_update khong O(n)?
 //the scheduler will run these tasks, eventually.
 void SCH_Check_Ready_Task() {
 	if (tick_time >= min_delay) {
-			static char timeFormat[30];
-			int strlength = sprintf(timeFormat, "min: %ld, tick: %ld\r\n", min_delay, tick_time);
-			HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
+//			static char timeFormat[30];
+//			int strlength = sprintf(timeFormat, "min: %ld, tick: %ld\r\n", min_delay, tick_time);
+//			HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
 		uint32_t new_min = 0xffffffff;
 		for(int i = 0; i < MAX_TASK; i++) {
 			if (sch_Task[i].pFunc != 0) {
@@ -160,6 +196,40 @@ void SCH_Dispactch_Tasks(void) {
 			}
 		}
 	}
+	// Report system status
+	SCH_Report_Status();
+}
+//---------------------------------------------------------------------------------------
+
+
+//ERROR SECTION--------------------------------------------------------------------------
+
+static uint32_t Error_tick_count_G;
+
+//the funny part is, this function is called inside Dispact_Task, and Dispact_Task is called
+//inside while loop. then how much "tick" is need, exactly?
+void SCH_Report_Status(void) {
+#ifdef SCH_REPORT_ERRORS
+	//ONLY APPLIES IF WE ARE REPORTING ERRORS
+	// Check for a new error code
+	if (Error_code_G != Last_error_code_G) {
+		//B(SET)RR: 32 BIT, 16bit low can use to set a pin to high if a bit is 1.
+		Error_port->BSRR = ((uint16_t)Error_code_G << 8);
+		Last_error_code_G = Error_code_G;
+		if (Error_code_G != 0) {
+			Error_tick_count_G = 60000;
+		} else {
+			Error_tick_count_G = 0;
+			Error_port->BRR = ((uint16_t)0xff << 8); 		//have to manually RESET error pin.
+		}
+	} else {
+		if (Error_tick_count_G != 0) {
+			if (--Error_tick_count_G == 0) {
+				Error_code_G = 0; //Reset error code.
+			}
+		}
+	}
+#endif
 }
 
 
