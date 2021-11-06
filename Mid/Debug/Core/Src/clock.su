@@ -1,0 +1,2 @@
+clock.c:25:6:clock_run	4	static
+clock.c:39:6:clock_fsm	8	static

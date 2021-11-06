@@ -135,11 +135,11 @@ int main(void)
   //NO RECEIVE
   //HAL_UART_Receive_IT(&huart1, &rData, 1);
   SCH_Init();
-  SCH_Add_Task(task1, 700, 0);
-  SCH_Add_Task(task2, 710, 0);
-  SCH_Add_Task(task3, 720, 0);
-  SCH_Add_Task(task4, 730, 0);
-  SCH_Add_Task(task5, 740, 0);
+  SCH_Add_Task(task1, 600, 0);
+  SCH_Add_Task(task2, 1000, 0);
+  SCH_Add_Task(task3, 1500, 0);
+  SCH_Add_Task(task4, 2000, 0);
+  SCH_Add_Task(task5, 2500, 0);
   while (1)
   {
 	  //HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
@@ -391,51 +391,47 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 int more_task_counter = 0;
-int divider = 6;
+int divider = 60;	//60 la boi chung nho nhat cua 2, 3, 4 va 5.
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM3) {
 		//cho them moi task 1 khoan delay nho (10ms) cho an toan. dung ra la nho delay nay thi task moi duoc thuc thi
 		//vi TIM3 va TIM2 goi cung 1 luc, xay ra truong hop TIM2 chay truoc, update tick_time truoc (=300), sau do addTask lam sau
 		//thi no se = tick_time + DELAY = 300 = min_delay luon, va sau 10ms, tick_time da la 310 > min_delay, tick time chay luon, ko qua tro lai.
-			switch(more_task_counter) {
-			case 0:
-				if (SCH_Add_Task(task1, 10, 0) == MAX_TASK) {
-					static uint8_t max_queue[] = {"Queue is full\r\n"};
-					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
-				}
-				break;
-			case 1:{
+
+			//tai thoi diem ham nay duoc goi, 500ms da troi qua.
+			more_task_counter = (more_task_counter + 1) % divider;		//60 (divider) la boi chung nho nhat cua 2, 3, 4 va 5.
+
+			if (SCH_Add_Task(task1, 10, 0) == MAX_TASK) {
+				static uint8_t max_queue[] = {"Queue is full\r\n"};
+				HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
+			}
+
+			if (more_task_counter % 2 == 0) {		// <-- 2
 				if (SCH_Add_Task(task2, 10, 0) == MAX_TASK) {
 					static uint8_t max_queue[] = {"Queue is full\r\n"};
 					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
 				}
-				break;
 			}
-			case 2:
+			if (more_task_counter % 3 == 0) {		// <-- 3
 				if (SCH_Add_Task(task3, 10, 0) == MAX_TASK) {
 					static uint8_t max_queue[] = {"Queue is full\r\n"};
 					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
 				}
-				break;
-			case 3:
+			}
+			if (more_task_counter % 4 == 0) {		// <-- 4
 				if (SCH_Add_Task(task4, 10, 0) == MAX_TASK) {
 					static uint8_t max_queue[] = {"Queue is full\r\n"};
 					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
 				}
-				break;
-			case 4:
+			}
+			if (more_task_counter % 5 == 0) {		// <-- 5
 				if (SCH_Add_Task(task5, 10, 0) == MAX_TASK) {
 					static uint8_t max_queue[] = {"Queue is full\r\n"};
 					HAL_UART_Transmit_IT(&huart1, max_queue, sizeof(max_queue));
 				}
-				break;
-			case 5:
-				SCH_Delete_Task(0);
-				divider = 5;
-				break;
 			}
 
-			more_task_counter = (more_task_counter + 1) % divider;
+
 		}
 
 	if (htim->Instance == TIM2) {

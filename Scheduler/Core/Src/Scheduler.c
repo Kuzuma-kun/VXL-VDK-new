@@ -153,10 +153,12 @@ void SCH_Check_Ready_Task() {
 					sch_Task[i].ready += 1;
 					if (sch_Task[i].period != 0) {
 						sch_Task[i].delay += sch_Task[i].period;
-						while(sch_Task[i].delay <= 0) {
+						if (sch_Task[i].delay <= 0) {
 							//make the task wait for "period" and run again
-							sch_Task[i].delay += sch_Task[i].period;
-							sch_Task[i].ready += 1;
+							int temp = sch_Task[i].delay * (-1);
+							int distance = temp / sch_Task[i].period;
+							sch_Task[i].delay += sch_Task[i].period * (distance + 1);
+							sch_Task[i].ready += distance;
 						}
 					} //if period == 0, we don't want it to execute again, so we do nothing here
 				}
