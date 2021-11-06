@@ -8,8 +8,8 @@
 #ifndef INC_CLOCK_H_
 #define INC_CLOCK_H_
 
-#define ONE_SECOND 100;
-#define FIVE_SECOND 500;
+#define ONE_SECOND 100
+#define FIVE_SECOND 500
 
 void clock_run();
 

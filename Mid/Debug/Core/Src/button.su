@@ -1,4 +1,4 @@
-button.c:21:6:readButton	24	static
-button.c:40:5:getButtonValue	16	static
-button.c:48:6:setFlagButtonDelay	16	static
-button.c:53:5:getFlagButtonDelay	16	static
+button.c:20:6:readButton	24	static
+button.c:39:5:getButtonValue	16	static
+button.c:45:6:setFlagButtonDelay	16	static
+button.c:50:5:getFlagButtonDelay	16	static

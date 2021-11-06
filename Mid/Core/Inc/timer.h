@@ -8,7 +8,7 @@
 #ifndef INC_TIMER_H_
 #define INC_TIMER_H_
 
-#define NO_OF_TIMER 3
+#define NO_OF_TIMER 2
 //change this value as interrupt time changed.
 #define TIMER_CYCLE 10
 

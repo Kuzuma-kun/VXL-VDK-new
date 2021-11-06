@@ -8,13 +8,6 @@
 #ifndef INC_BUTTON_H_
 #define INC_BUTTON_H_
 
-/*
- * button.c
- *
- *  Created on: Nov 5, 2021
- *      Author: ngocc
- */
-
 #include "main.h"
 
 #define NO_OF_BUTTON 3
