@@ -140,7 +140,14 @@ void SCH_Update(void) {		//tai sao minh lai co khien ham SCH_update khong O(n)?
 //By doing like this, even if some tasks is scheduled to run while we stuck at dispact_task, these tasks won't be skipped;
 //the scheduler will run these tasks, eventually.
 void SCH_Check_Ready_Task() {
+
+
 	if (tick_time >= min_delay) {
+		static char timeformat[100];
+			//		uint32_t time_ms = SCH_tasks_G[Index].Delay;
+		int strlength = sprintf(timeformat, "before: array: %d %d %d %d %d\r\n", sch_Task[0].delay, sch_Task[1].delay,
+				sch_Task[2].delay, sch_Task[3].delay,sch_Task[4].delay);
+		HAL_UART_Transmit(&huart1, (uint8_t*)timeformat, strlength, 10*strlength);
 //			static char timeFormat[30];
 //			int strlength = sprintf(timeFormat, "min: %ld, tick: %ld\r\n", min_delay, tick_time);
 //			HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
@@ -169,6 +176,10 @@ void SCH_Check_Ready_Task() {
 		}
 		min_delay = new_min;
 		tick_time = 0;
+		//after changing
+		strlength = sprintf(timeformat, "after: array: %d %d %d %d %d\r\n", sch_Task[0].delay, sch_Task[1].delay,
+				sch_Task[2].delay, sch_Task[3].delay,sch_Task[4].delay);
+		HAL_UART_Transmit(&huart1, (uint8_t*)timeformat, strlength, 10*strlength);
 	}
 }
 
@@ -181,10 +192,10 @@ void SCH_Dispactch_Tasks(void) {
 			(*sch_Task[i].pFunc)();
 			//----------------------------------send data to terminal----------------------------------------------
 			//use static so the buffer will live longer, long enough to send all data to the UART.
-			static char timeFormat[30];
-			uint32_t time_ms = HAL_GetTick();
-			int strlength = sprintf(timeFormat, "%ld :task done\r\n", time_ms);
-			HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
+//			static char timeFormat[30];
+//			uint32_t time_ms = HAL_GetTick();
+//			int strlength = sprintf(timeFormat, "%ld :task done\r\n", time_ms);
+//			HAL_UART_Transmit_IT(&huart1, (uint8_t*)timeFormat, strlength);
 			//call, and then return. This function does not "block" as HAL_UART_Transmit that wait for all byte to send.
 			//since _IT will end quickly, if the buffer is not static, buffer might be destroyed before all the data
 			//has been send.
@@ -202,6 +213,8 @@ void SCH_Dispactch_Tasks(void) {
 	SCH_Report_Status();
 }
 //---------------------------------------------------------------------------------------
+
+
 
 
 //ERROR SECTION--------------------------------------------------------------------------
