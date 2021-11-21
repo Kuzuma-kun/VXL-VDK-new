@@ -27,7 +27,7 @@ void uart_communication_fsm() {
 	case WAIT_RTS:
 		if (command_done == 1) {
 			command_done = 0;
-			HAL_UART_Transmit(&huart2, strs, sprintf(strs, "\r\ninput string is: %s \r\n", getCommand()), 1000);
+			HAL_UART_Transmit(&huart2, strs, sprintf((char*)strs, "\r\ninput string is: %s \r\n", getCommand()), 1000);
 			if (strcmp(getCommand(), "RTS") == 0) {
 				ADC_value = HAL_ADC_GetValue(&hadc1);
 //				HAL_UART_Transmit(&huart2, (void*)str, sprintf(str, "!ADC=%d#\r\n", ADC_value), 1000);
@@ -44,10 +44,11 @@ void uart_communication_fsm() {
 	case WAIT_OK:
 		if (command_done == 1) {
 			command_done = 0;
-			stopTimer(2);
-			HAL_UART_Transmit(&huart2, strs, sprintf(strs, "\r\ninput string is: %s \r\n", getCommand()), 1000);
+
+			HAL_UART_Transmit(&huart2, strs, sprintf((char*)strs, "\r\ninput string is: %s \r\n", getCommand()), 1000);
 			if (strcmp(getCommand(), "OK") == 0) {
 				commu_state = WAIT_RTS;
+				stopTimer(2);
 			}
 		}
 		if (getTimerFlag(2) == 1) {

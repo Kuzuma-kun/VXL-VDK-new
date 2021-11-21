@@ -1718,7 +1718,7 @@ void uart_communication_fsm() {
  80009d0:	4b3e      	ldr	r3, [pc, #248]	; (8000acc <uart_communication_fsm+0x120>)
  80009d2:	2200      	movs	r2, #0
  80009d4:	701a      	strb	r2, [r3, #0]
-			HAL_UART_Transmit(&huart2, strs, sprintf(strs, "\r\ninput string is: %s \r\n", getCommand()), 1000);
+			HAL_UART_Transmit(&huart2, strs, sprintf((char*)strs, "\r\ninput string is: %s \r\n", getCommand()), 1000);
  80009d6:	f7ff fc17 	bl	8000208 <getCommand>
  80009da:	4603      	mov	r3, r0
  80009dc:	461a      	mov	r2, r3
@@ -1785,35 +1785,35 @@ void uart_communication_fsm() {
  8000a58:	4b1c      	ldr	r3, [pc, #112]	; (8000acc <uart_communication_fsm+0x120>)
  8000a5a:	2200      	movs	r2, #0
  8000a5c:	701a      	strb	r2, [r3, #0]
-			stopTimer(2);
- 8000a5e:	2002      	movs	r0, #2
- 8000a60:	f7ff ff8c 	bl	800097c <stopTimer>
-			HAL_UART_Transmit(&huart2, strs, sprintf(strs, "\r\ninput string is: %s \r\n", getCommand()), 1000);
- 8000a64:	f7ff fbd0 	bl	8000208 <getCommand>
- 8000a68:	4603      	mov	r3, r0
- 8000a6a:	461a      	mov	r2, r3
- 8000a6c:	4918      	ldr	r1, [pc, #96]	; (8000ad0 <uart_communication_fsm+0x124>)
- 8000a6e:	4819      	ldr	r0, [pc, #100]	; (8000ad4 <uart_communication_fsm+0x128>)
- 8000a70:	f002 fd76 	bl	8003560 <siprintf>
- 8000a74:	4603      	mov	r3, r0
- 8000a76:	b29a      	uxth	r2, r3
- 8000a78:	f44f 737a 	mov.w	r3, #1000	; 0x3e8
- 8000a7c:	4915      	ldr	r1, [pc, #84]	; (8000ad4 <uart_communication_fsm+0x128>)
- 8000a7e:	4816      	ldr	r0, [pc, #88]	; (8000ad8 <uart_communication_fsm+0x12c>)
- 8000a80:	f002 f851 	bl	8002b26 <HAL_UART_Transmit>
+			HAL_UART_Transmit(&huart2, strs, sprintf((char*)strs, "\r\ninput string is: %s \r\n", getCommand()), 1000);
+ 8000a5e:	f7ff fbd3 	bl	8000208 <getCommand>
+ 8000a62:	4603      	mov	r3, r0
+ 8000a64:	461a      	mov	r2, r3
+ 8000a66:	491a      	ldr	r1, [pc, #104]	; (8000ad0 <uart_communication_fsm+0x124>)
+ 8000a68:	481a      	ldr	r0, [pc, #104]	; (8000ad4 <uart_communication_fsm+0x128>)
+ 8000a6a:	f002 fd79 	bl	8003560 <siprintf>
+ 8000a6e:	4603      	mov	r3, r0
+ 8000a70:	b29a      	uxth	r2, r3
+ 8000a72:	f44f 737a 	mov.w	r3, #1000	; 0x3e8
+ 8000a76:	4917      	ldr	r1, [pc, #92]	; (8000ad4 <uart_communication_fsm+0x128>)
+ 8000a78:	4817      	ldr	r0, [pc, #92]	; (8000ad8 <uart_communication_fsm+0x12c>)
+ 8000a7a:	f002 f854 	bl	8002b26 <HAL_UART_Transmit>
 			if (strcmp(getCommand(), "OK") == 0) {
- 8000a84:	f7ff fbc0 	bl	8000208 <getCommand>
- 8000a88:	4603      	mov	r3, r0
- 8000a8a:	4919      	ldr	r1, [pc, #100]	; (8000af0 <uart_communication_fsm+0x144>)
- 8000a8c:	4618      	mov	r0, r3
- 8000a8e:	f7ff fb5d 	bl	800014c <strcmp>
- 8000a92:	4603      	mov	r3, r0
- 8000a94:	2b00      	cmp	r3, #0
- 8000a96:	d102      	bne.n	8000a9e <uart_communication_fsm+0xf2>
+ 8000a7e:	f7ff fbc3 	bl	8000208 <getCommand>
+ 8000a82:	4603      	mov	r3, r0
+ 8000a84:	491a      	ldr	r1, [pc, #104]	; (8000af0 <uart_communication_fsm+0x144>)
+ 8000a86:	4618      	mov	r0, r3
+ 8000a88:	f7ff fb60 	bl	800014c <strcmp>
+ 8000a8c:	4603      	mov	r3, r0
+ 8000a8e:	2b00      	cmp	r3, #0
+ 8000a90:	d105      	bne.n	8000a9e <uart_communication_fsm+0xf2>
 				commu_state = WAIT_RTS;
- 8000a98:	4b0b      	ldr	r3, [pc, #44]	; (8000ac8 <uart_communication_fsm+0x11c>)
- 8000a9a:	2200      	movs	r2, #0
- 8000a9c:	701a      	strb	r2, [r3, #0]
+ 8000a92:	4b0d      	ldr	r3, [pc, #52]	; (8000ac8 <uart_communication_fsm+0x11c>)
+ 8000a94:	2200      	movs	r2, #0
+ 8000a96:	701a      	strb	r2, [r3, #0]
+				stopTimer(2);
+ 8000a98:	2002      	movs	r0, #2
+ 8000a9a:	f7ff ff6f 	bl	800097c <stopTimer>
 		if (getTimerFlag(2) == 1) {
  8000a9e:	2002      	movs	r0, #2
  8000aa0:	f7ff ff56 	bl	8000950 <getTimerFlag>
