@@ -7,10 +7,13 @@
 
 #ifndef INC_COMMAND_PARSER_H_
 #define INC_COMMAND_PARSER_H_
+#include "main.h"
 
-void command_parser_fsm(char * buffer, unsigned int index);
+extern unsigned char command_done;
 
-unsigned char * getCommand();
+void command_parser_fsm(uint8_t * buffer, unsigned int index);
+
+char * getCommand();
 
 void clear_command();
 

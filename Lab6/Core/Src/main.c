@@ -22,8 +22,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdlib.h>
-#include <stdio.h>
+#include "timer.h"
+#include "command_parser.h"
+#include "uart_communication.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,6 +34,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define MAX_BUFFER_SIZE	30
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -63,19 +65,26 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t temp = 0; //1 byte
+
 uint8_t sendData[] = "Hello\r\n";
 uint8_t	endline[] = "\r\n";
-uint8_t buffer[30];
 uint32_t adcValue = 0;
 uint8_t	receiveBuffer = 0;
+
+
+uint8_t temp = 0; //1 byte
+uint8_t buffer[MAX_BUFFER_SIZE];
+uint8_t index_buffer = 0;
+uint8_t buffer_flag = 0;
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
 	if (huart->Instance == USART2) {
 		//TODO HERE
 		//gui nguoc lai len terminal
 		HAL_UART_Transmit(huart, &temp, 1, 50);
-
+		buffer[index_buffer++] = temp;
+		if (index_buffer == MAX_BUFFER_SIZE) index_buffer = 0;
+		buffer_flag = 1;
 
 		//ENABLE LAI INTERRUPT
 		HAL_UART_Receive_IT(&huart2, &temp, 1);
@@ -119,9 +128,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
   HAL_ADC_Start(&hadc1);
-
-  HAL_ADC_GetValue(&hadc1);
-  uint8_t str[20];
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -129,6 +135,8 @@ int main(void)
   //phai dat truoc while 1. no se cho, khi co tin hieu, no se vao ham callback
   //sau do goi lai receive IT de ngat lan nua.
   HAL_UART_Receive_IT(&huart2, &temp, 1);
+  initTimer(1);
+  initTimer(0);
   while (1)
   {
 	  //lay tra tri ADC bang ham HAL_ADC_GetValue(). ham nay tra ve 1 unin32_t
@@ -145,6 +153,17 @@ int main(void)
 //	  HAL_UART_Transmit(&huart2, (void *)str, sprintf(str, "%d\n", adcValue), 1000);
 //	  HAL_UART_Transmit(&huart2, endline, sizeof(endline), sizeof(endline) * 10);
 //	  HAL_Delay(2000);
+	  if (getTimerFlag(1) == 1) {
+		  HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+		  setTimer(1, 1000);
+	  }
+	  if (buffer_flag == 1) {
+		  command_parser_fsm(buffer, index_buffer);
+		  buffer_flag = 0;
+	  }
+
+	  uart_communication_fsm();
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -343,14 +362,12 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-int counter = 100;
+
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim->Instance == TIM2) {
-		counter--;
-		if (counter == 0) {
-			HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
-			counter = 100;
-		}
+		timer_run(0);
+		timer_run(1);
+		timer_run(2);
 	}
 }
 /* USER CODE END 4 */
