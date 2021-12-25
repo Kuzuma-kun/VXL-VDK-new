@@ -1,0 +1,2 @@
+button.c:21:6:read_button	16	static
+button.c:50:5:get_button_value	16	static

@@ -1,0 +1,5 @@
+timer.c:13:6:init_timer	16	static
+timer.c:17:6:set_timer	24	static
+timer.c:22:6:run_timer	16	static
+timer.c:31:5:get_timer_flag	16	static
+timer.c:35:6:stop_timer	16	static
